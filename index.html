@@ -113,9 +113,21 @@ h1 { margin: 0; font-size: 26px; line-height: 1.2; font-weight: 700; text-wrap: 
 .rv .ra b { color: var(--ok); font-weight: 600; }
 .rv .ry { color: var(--ko); }
 .toggle { display: flex; gap: 8px; align-items: center; font-size: 14px; color: var(--muted); }
+.who { display: flex; flex-direction: column; gap: 8px; }
+.who label { font-weight: 600; font-size: 15px; }
+.who input {
+  font: inherit; font-size: 16px; color: var(--fg); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; width: 100%;
+}
+.who input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+.err { color: var(--ko); font-size: 14px; margin: 0; }
+.saved { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+.saved.ko { color: var(--ko); }
+.link { font: inherit; font-size: 14px; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; }
 @media (prefers-reduced-motion: reduce) { .opt { transition: none; } }
 @media (max-width: 480px) { .card { padding: 16px; } h1 { font-size: 22px; } .q { font-size: 17px; } }
 </style>
+<script src="config.js"></script>
 </head>
 <body>
 
@@ -179,12 +191,51 @@ const QS = [
     a: 1, e: "Le attività non sono sequenziali né lineari e insieme formano la catena del valore. Il ciclo copre sia il prodotto (Scoprire–Costruire) sia il servizio (Erogare–Supportare)." }
 ];
 const LETTERS = ["A", "B", "C", "D"];
-let order, idx, answers, shuffle = false;
+let order, idx, answers, shuffle = false, saved = false;
+let player = "";
+try { player = localStorage.getItem("itil5-quiz-name") || ""; } catch (_) {}
 const card = document.getElementById("card");
 const rail = document.getElementById("rail");
+const CFG = window.QUIZ_CONFIG || {};
+const DB_ON = !!(CFG.supabaseUrl && CFG.supabaseAnonKey);
+
+function askName(msg) {
+  order = null;
+  rail.innerHTML = QS.map(() => "<span></span>").join("");
+  let h = `<form class="who" id="who" novalidate>`;
+  h += `<label for="name">Come ti chiami?</label>`;
+  h += `<input id="name" name="name" type="text" autocomplete="name" maxlength="80" placeholder="Nome e cognome" value="${esc(player).replace(/"/g, "&quot;")}">`;
+  if (msg) h += `<p class="err" role="alert">${esc(msg)}</p>`;
+  h += `<div class="actions"><span class="hint">${QS.length} domande · circa 10 minuti</span><button class="btn" type="submit">Inizia il quiz</button></div>`;
+  h += `</form>`;
+  card.innerHTML = h;
+  const input = document.getElementById("name");
+  input.focus({ preventScroll: true });
+  document.getElementById("who").addEventListener("submit", e => {
+    e.preventDefault();
+    const v = input.value.replace(/\s+/g, " ").trim();
+    if (v.length < 2) return askName("Scrivi il tuo nome per iniziare.");
+    player = v;
+    try { localStorage.setItem("itil5-quiz-name", v); } catch (_) {}
+    start(false);
+  });
+}
+
+async function saveResult(right, pct) {
+  if (!DB_ON) return null;
+  const detail = order.map((qi, i) => ({ n: qi + 1, q: QS[qi].q, cat: QS[qi].cat, scelta: answers[i], corretta: QS[qi].a }));
+  try {
+    const r = await fetch(`${CFG.supabaseUrl}/rest/v1/quiz_results`, {
+      method: "POST",
+      headers: { apikey: CFG.supabaseAnonKey, "Content-Type": "application/json", Prefer: "return=minimal" },
+      body: JSON.stringify({ quiz_id: CFG.quizId || "itil5", name: player, score: right, total: order.length, pct, shuffled: shuffle, answers: detail })
+    });
+    return r.ok;
+  } catch (_) { return false; }
+}
 
 function start(randomize) {
-  shuffle = !!randomize;
+  shuffle = !!randomize; saved = false;
   order = QS.map((_, i) => i);
   if (shuffle) for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
   idx = 0; answers = new Array(QS.length).fill(null);
@@ -255,13 +306,27 @@ function renderEnd() {
     h += `<p class="note">Nessun errore. Prova di nuovo in ordine casuale per verificare che non stai ricordando la sequenza.</p>`;
   }
   h += `<div class="actions"><button class="btn ghost" id="again">Ricomincia</button><button class="btn" id="shuffle">Ricomincia in ordine casuale</button></div>`;
+  h += `<div class="actions"><span class="saved" id="saved">${DB_ON ? "Salvataggio del risultato…" : ""}</span><button class="link" id="who-change">Non sei ${esc(player)}? Cambia nome</button></div>`;
   card.innerHTML = h;
   document.getElementById("again").addEventListener("click", () => start(false));
   document.getElementById("shuffle").addEventListener("click", () => start(true));
+  document.getElementById("who-change").addEventListener("click", () => askName());
+  if (!saved && DB_ON) {
+    saved = true;
+    saveResult(right, pct).then(ok => {
+      const s = document.getElementById("saved");
+      if (!s) return;
+      s.textContent = ok ? `Risultato salvato a nome di ${player}.` : "Non è stato possibile salvare il risultato.";
+      if (!ok) s.classList.add("ko");
+    });
+  } else if (saved) {
+    document.getElementById("saved").textContent = "";
+  }
 }
 
 document.addEventListener("keydown", e => {
-  if (idx >= order.length || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (!order || idx >= order.length || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.target instanceof HTMLInputElement) return;
   const k = e.key.toUpperCase();
   let i = LETTERS.indexOf(k);
   if (i < 0 && "1234".includes(k) && k.length === 1) i = +k - 1;
@@ -269,7 +334,7 @@ document.addEventListener("keydown", e => {
   else if (e.key === "Enter" && answers[idx] !== null && document.activeElement?.id !== "next") { e.preventDefault(); next(); }
 });
 
-start(false);
+askName();
 </script>
 
 </body>

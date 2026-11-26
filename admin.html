@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>ITIL 5 Quiz · Risultati</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: same palette as the quiz. Login card when signed out; when signed in: KPI row, filters, results table, most-missed questions. */
+:root {
+  --bg: #F2F5F5; --surface: #FFFFFF; --fg: #1F2933; --muted: #5B6770; --line: #D3DCDE;
+  --accent: #0B5D6B; --accent-soft: #E1EFF1; --ok: #2F7A3A; --ok-soft: #E6F3E8; --ko: #B3401F; --ko-soft: #FBEBE5;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #11181B; --surface: #182226; --fg: #E4ECEE; --muted: #93A3A9; --line: #2B3A3F;
+    --accent: #5FB8C6; --accent-soft: #1B3339; --ok: #7CCB86; --ok-soft: #1C3222; --ko: #F0977A; --ko-soft: #3A2119; color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.5;
+  padding: 28px max(16px, env(safe-area-inset-left, 0px)) 48px max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 1040px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+.narrow { max-width: 420px; }
+header { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+.eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+h1 { margin: 2px 0 0; font-size: 26px; line-height: 1.2; }
+h2 { margin: 0; font-size: 16px; }
+.muted { color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+label { font-weight: 600; font-size: 14px; display: flex; flex-direction: column; gap: 6px; }
+input, select {
+  font: inherit; font-size: 15px; font-weight: 400; color: var(--fg); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px;
+}
+input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.btn { font: inherit; font-weight: 600; font-size: 14px; border-radius: 8px; padding: 9px 16px; cursor: pointer; background: var(--accent); color: var(--surface); border: 1px solid var(--accent); }
+.btn.ghost { background: transparent; color: var(--accent); }
+.btn:disabled { opacity: .6; cursor: default; }
+.err { color: var(--ko); margin: 0; font-size: 14px; }
+.toolbar { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 2px; }
+.kpi .v { font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.15; }
+.kpi .l { font-size: 13px; color: var(--muted); }
+
+.filters { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
+.filters label { font-weight: 500; font-size: 13px; color: var(--muted); }
+.filters .check { flex-direction: row; align-items: center; gap: 8px; padding-bottom: 9px; color: var(--fg); font-size: 14px; }
+
+.tablewrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-family: var(--font-mono); font-size: 11px; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); font-weight: 600; white-space: nowrap; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+tr.row { cursor: pointer; }
+tr.row:hover td { background: var(--accent-soft); }
+tr.detail td { background: var(--bg); }
+.pill { font-family: var(--font-mono); font-size: 11px; letter-spacing: .04em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.pill.pass { color: var(--ok); background: var(--ok-soft); }
+.pill.fail { color: var(--ko); background: var(--ko-soft); }
+.ans { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+.ans .ok { color: var(--ok); }
+.ans .ko { color: var(--ko); }
+.del { font: inherit; font-size: 13px; color: var(--ko); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; }
+
+.miss { display: flex; flex-direction: column; gap: 10px; }
+.mq { display: grid; grid-template-columns: 1fr 160px 48px; gap: 12px; align-items: center; font-size: 14px; }
+.bar { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.bar span { display: block; height: 100%; background: var(--ko); border-radius: 4px; }
+.mq .p { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--font-mono); font-size: 13px; }
+.empty { color: var(--muted); padding: 12px 0; }
+[hidden] { display: none !important; }
+@media (max-width: 720px) {
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mq { grid-template-columns: 1fr 64px 40px; }
+  .hide-sm { display: none; }
+}
+</style>
+<script src="config.js"></script>
+</head>
+<body>
+
+<div class="wrap narrow" id="login-view" hidden>
+  <header><div><span class="eyebrow">ITIL 5 Quiz</span><h1>Risultati</h1></div></header>
+  <form class="card" id="login" novalidate>
+    <label>Email<input id="email" type="email" autocomplete="username" required></label>
+    <label>Password<input id="password" type="password" autocomplete="current-password" required></label>
+    <p class="err" id="login-err" role="alert" hidden></p>
+    <button class="btn" type="submit" id="login-btn">Accedi</button>
+  </form>
+</div>
+
+<div class="wrap" id="app-view" hidden>
+  <header>
+    <div><span class="eyebrow">ITIL 5 Quiz · solo per il docente</span><h1>Risultati</h1></div>
+    <div class="toolbar">
+      <button class="btn ghost" id="reload">Aggiorna</button>
+      <button class="btn ghost" id="csv">Scarica CSV</button>
+      <button class="btn ghost" id="logout">Esci</button>
+    </div>
+  </header>
+  <p class="err" id="app-err" role="alert" hidden></p>
+
+  <section class="kpis" id="kpis"></section>
+
+  <section class="card">
+    <div class="filters">
+      <label>Cerca nome<input id="q" type="search" placeholder="es. Rossi"></label>
+      <label>Quiz<select id="quiz"></select></label>
+      <label>Dal<input id="from" type="date"></label>
+      <label class="check"><input id="latest" type="checkbox"> Solo l'ultimo tentativo per persona</label>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Data</th><th>Nome</th><th class="num">Punti</th><th class="num">%</th><th>Esito</th><th class="hide-sm">Ordine</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Domande più sbagliate</h2>
+    <div class="miss" id="miss"></div>
+  </section>
+</div>
+
+<script>
+const CFG = window.QUIZ_CONFIG || {};
+const URL_ = (CFG.supabaseUrl || "").replace(/\/$/, "");
+const KEY = CFG.supabaseAnonKey || "";
+const PASS = 65;
+const LETTERS = ["A", "B", "C", "D"];
+const $ = id => document.getElementById(id);
+let session = null, all = [], openId = null;
+
+function esc(t) { return String(t ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+function show(view) { $("login-view").hidden = view !== "login"; $("app-view").hidden = view !== "app"; }
+function fmtDate(s) { return new Date(s).toLocaleString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }); }
+
+function saveSession(s) {
+  session = s ? { access_token: s.access_token, refresh_token: s.refresh_token, expires_at: s.expires_at || Math.floor(Date.now() / 1000) + (s.expires_in || 3600) } : null;
+  if (session) sessionStorage.setItem("itil5-admin", JSON.stringify(session)); else sessionStorage.removeItem("itil5-admin");
+}
+
+async function auth(grant, body) {
+  const r = await fetch(`${URL_}/auth/v1/token?grant_type=${grant}`, {
+    method: "POST", headers: { apikey: KEY, "Content-Type": "application/json" }, body: JSON.stringify(body)
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error_description || j.msg || "Accesso non riuscito");
+  return j;
+}
+
+async function token() {
+  if (!session) throw new Error("no-session");
+  if (session.expires_at - 60 < Date.now() / 1000) saveSession(await auth("refresh_token", { refresh_token: session.refresh_token }));
+  return session.access_token;
+}
+
+async function api(path, opts = {}) {
+  const r = await fetch(`${URL_}/rest/v1/${path}`, {
+    ...opts, headers: { apikey: KEY, Authorization: `Bearer ${await token()}`, "Content-Type": "application/json", ...(opts.headers || {}) }
+  });
+  if (r.status === 401) { saveSession(null); show("login"); throw new Error("Sessione scaduta, accedi di nuovo."); }
+  if (!r.ok) throw new Error(`Errore ${r.status}: ${(await r.text()).slice(0, 200)}`);
+  return r.status === 204 ? null : r.json();
+}
+
+function appError(msg) { $("app-err").textContent = msg || ""; $("app-err").hidden = !msg; }
+
+async function load() {
+  appError("");
+  $("reload").disabled = true;
+  try {
+    const admin = await api("quiz_admins?select=user_id");
+    if (!admin.length) { appError("Questo utente non è abilitato a vedere i risultati (manca in quiz_admins)."); all = []; draw(); return; }
+    const rows = [];
+    for (let from = 0; ; from += 1000) {
+      const page = await api(`quiz_results?select=*&order=created_at.desc`, { headers: { Range: `${from}-${from + 999}` } });
+      rows.push(...page);
+      if (page.length < 1000) break;
+    }
+    all = rows;
+    const quizzes = [...new Set(all.map(r => r.quiz_id))];
+    const cur = $("quiz").value;
+    $("quiz").innerHTML = `<option value="">Tutti</option>` + quizzes.map(q => `<option${q === cur ? " selected" : ""}>${esc(q)}</option>`).join("");
+    draw();
+  } catch (e) { appError(e.message); }
+  finally { $("reload").disabled = false; }
+}
+
+function filtered() {
+  const q = $("q").value.trim().toLowerCase();
+  const quiz = $("quiz").value;
+  const from = $("from").value ? new Date($("from").value + "T00:00:00") : null;
+  let rows = all.filter(r => (!q || r.name.toLowerCase().includes(q)) && (!quiz || r.quiz_id === quiz) && (!from || new Date(r.created_at) >= from));
+  if ($("latest").checked) {
+    const seen = new Set();
+    rows = rows.filter(r => { const k = r.quiz_id + "|" + r.name.trim().toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; });
+  }
+  return rows;
+}
+
+function draw() {
+  const rows = filtered();
+  const people = new Set(rows.map(r => r.name.trim().toLowerCase())).size;
+  const avg = rows.length ? Math.round(rows.reduce((s, r) => s + r.pct, 0) / rows.length) : null;
+  const passed = rows.filter(r => r.pct >= PASS).length;
+  $("kpis").innerHTML = [
+    [rows.length, "Tentativi"],
+    [people, "Persone"],
+    [avg === null ? "–" : avg + "%", "Punteggio medio"],
+    [rows.length ? Math.round(passed / rows.length * 100) + "%" : "–", `Sopra la soglia del ${PASS}%`]
+  ].map(([v, l]) => `<div class="kpi"><span class="v">${v}</span><span class="l">${l}</span></div>`).join("");
+
+  let h = "";
+  rows.forEach(r => {
+    const pass = r.pct >= PASS;
+    h += `<tr class="row" data-id="${r.id}" tabindex="0" aria-expanded="${openId === r.id}"><td>${fmtDate(r.created_at)}</td><td>${esc(r.name)}</td><td class="num">${r.score}/${r.total}</td><td class="num">${r.pct}%</td><td><span class="pill ${pass ? "pass" : "fail"}">${pass ? "Sopra" : "Sotto"}</span></td><td class="hide-sm muted">${r.shuffled ? "casuale" : "normale"}</td></tr>`;
+    if (openId === r.id) {
+      const items = (r.answers || []).map(a => {
+        const ok = a.scelta === a.corretta;
+        return `<li><span class="${ok ? "ok" : "ko"}">${ok ? "✓" : "✗"}</span> ${esc(a.q)} <span class="muted">· risposta ${a.scelta == null ? "–" : LETTERS[a.scelta]}${ok ? "" : `, corretta ${LETTERS[a.corretta]}`}</span></li>`;
+      }).join("");
+      h += `<tr class="detail"><td colspan="6"><ol class="ans">${items || "<li>Nessun dettaglio</li>"}</ol><p style="margin:10px 0 0"><button class="del" data-del="${r.id}">Elimina questo tentativo</button></p></td></tr>`;
+    }
+  });
+  $("rows").innerHTML = h || `<tr><td colspan="6" class="empty">${all.length ? "Nessun risultato con questi filtri." : "Ancora nessun risultato."}</td></tr>`;
+
+  const stats = new Map();
+  rows.forEach(r => (r.answers || []).forEach(a => {
+    const s = stats.get(a.q) || { q: a.q, n: 0, wrong: 0 };
+    s.n++; if (a.scelta !== a.corretta) s.wrong++;
+    stats.set(a.q, s);
+  }));
+  const list = [...stats.values()].map(s => ({ ...s, p: Math.round(s.wrong / s.n * 100) })).sort((a, b) => b.p - a.p || b.n - a.n);
+  $("miss").innerHTML = list.length
+    ? list.map(s => `<div class="mq"><span>${esc(s.q)}</span><span class="bar" title="${s.wrong} errori su ${s.n}"><span style="width:${s.p}%"></span></span><span class="p">${s.p}%</span></div>`).join("")
+    : `<p class="empty">Nessun dato.</p>`;
+}
+
+function csv() {
+  const rows = filtered();
+  const qs = [...new Set(rows.flatMap(r => (r.answers || []).map(a => a.q)))];
+  const cell = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const head = ["data", "nome", "quiz", "punti", "totale", "percentuale", "esito", "ordine", ...qs.map((_, i) => `D${i + 1}`)];
+  const lines = rows.map(r => {
+    const byQ = new Map((r.answers || []).map(a => [a.q, a.scelta === a.corretta ? "OK" : "KO"]));
+    return [fmtDate(r.created_at), r.name, r.quiz_id, r.score, r.total, r.pct, r.pct >= PASS ? "sopra" : "sotto", r.shuffled ? "casuale" : "normale", ...qs.map(q => byQ.get(q) || "")].map(cell).join(";");
+  });
+  const legend = qs.map((q, i) => cell(`D${i + 1}: ${q}`)).join("\n");
+  const blob = new Blob(["﻿" + [head.map(cell).join(";"), ...lines, "", legend].join("\n")], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `risultati-quiz-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+$("login").addEventListener("submit", async e => {
+  e.preventDefault();
+  const err = $("login-err"); err.hidden = true;
+  $("login-btn").disabled = true;
+  try {
+    saveSession(await auth("password", { email: $("email").value.trim(), password: $("password").value }));
+    $("password").value = "";
+    show("app"); load();
+  } catch (x) {
+    err.textContent = /invalid/i.test(x.message) ? "Email o password non corretti." : x.message; err.hidden = false;
+  } finally { $("login-btn").disabled = false; }
+});
+$("logout").addEventListener("click", async () => {
+  try { await fetch(`${URL_}/auth/v1/logout`, { method: "POST", headers: { apikey: KEY, Authorization: `Bearer ${session?.access_token}` } }); } catch (_) {}
+  saveSession(null); all = []; show("login");
+});
+$("reload").addEventListener("click", load);
+$("csv").addEventListener("click", csv);
+["q", "quiz", "from", "latest"].forEach(id => $(id).addEventListener("input", draw));
+$("rows").addEventListener("click", async e => {
+  const del = e.target.closest("[data-del]");
+  if (del) {
+    const r = all.find(x => x.id === +del.dataset.del);
+    if (!confirm(`Eliminare definitivamente il tentativo di ${r.name} (${fmtDate(r.created_at)})?`)) return;
+    try { await api(`quiz_results?id=eq.${r.id}`, { method: "DELETE" }); all = all.filter(x => x.id !== r.id); openId = null; draw(); }
+    catch (x) { appError(x.message); }
+    return;
+  }
+  const tr = e.target.closest("tr.row");
+  if (tr) { openId = openId === +tr.dataset.id ? null : +tr.dataset.id; draw(); }
+});
+$("rows").addEventListener("keydown", e => { if (e.key === "Enter" && e.target.matches("tr.row")) e.target.click(); });
+
+if (!URL_ || !KEY) {
+  show("login");
+  $("login-err").textContent = "Supabase non è ancora configurato: compila config.js.";
+  $("login-err").hidden = false; $("login-btn").disabled = true;
+} else {
+  try { session = JSON.parse(sessionStorage.getItem("itil5-admin")); } catch (_) {}
+  if (session) { show("app"); load(); } else show("login");
+}
+</script>
+</body>
+</html>

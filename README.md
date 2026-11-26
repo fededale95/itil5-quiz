@@ -1,7 +1,30 @@
 # ITIL 5 · Quiz di autoverifica
 
 Quiz di 15 domande in stile esame ITIL Foundation (Version 5), usato nel corso interno Nimbus Reply.
-Pagina statica, un solo file (`index.html`), nessuna dipendenza da installare: funziona da telefono e da PC.
+Pagina statica, nessuna dipendenza da installare: funziona da telefono e da PC.
+
+| File | Cosa fa |
+|---|---|
+| `index.html` | Il quiz. All'inizio chiede il nome; a fine quiz salva il risultato su Supabase. |
+| `admin.html` | Dashboard dei risultati, protetta da email e password (Supabase Auth). |
+| `config.js` | URL del progetto Supabase e anon key, usati da entrambe le pagine. |
+| `supabase/setup.sql` | Tabella `quiz_results` e permessi (RLS): il quiz può solo scrivere, solo gli admin leggono. |
+
+## Configurare Supabase (una volta)
+
+1. Crea un progetto su [supabase.com](https://supabase.com).
+2. **SQL Editor** → incolla ed esegui `supabase/setup.sql`.
+3. **Authentication → Sign In / Providers**: disattiva *Allow new users to sign up*.
+4. **Authentication → Users → Add user → Create new user**: la tua email e una password, con *Auto Confirm User* attivo.
+5. **SQL Editor** → rendi admin quell'utente:
+   ```sql
+   insert into public.quiz_admins (user_id) select id from auth.users where email = 'LA-TUA-EMAIL';
+   ```
+6. **Project Settings → API**: copia *Project URL* e la chiave *anon public* in `config.js`, poi fai commit e push.
+
+La dashboard è su `https://<utente>.github.io/itil5-quiz/admin.html`.
+Senza la configurazione in `config.js` il quiz funziona lo stesso, ma non salva i risultati.
+La anon key è pubblica per scelta di Supabase: chi la conosce può solo inserire risultati, non leggerli.
 
 ## Pubblicazione su GitHub Pages
 
