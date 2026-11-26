@@ -156,7 +156,11 @@ async function auth(grant, body) {
     method: "POST", headers: { apikey: KEY, "Content-Type": "application/json" }, body: JSON.stringify(body)
   });
   const j = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(j.error_description || j.msg || "Accesso non riuscito");
+  if (!r.ok) {
+    const code = j.error_code || j.error || "";
+    const it = { invalid_credentials: "Email o password non corretti.", email_not_confirmed: "L'utente non è confermato: confermalo in Supabase → Authentication → Users.", invalid_grant: "Email o password non corretti." }[code];
+    throw new Error(it || `Accesso non riuscito: ${j.msg || j.error_description || j.message || r.status}`);
+  }
   return j;
 }
 
@@ -275,7 +279,7 @@ $("login").addEventListener("submit", async e => {
     $("password").value = "";
     show("app"); load();
   } catch (x) {
-    err.textContent = /invalid/i.test(x.message) ? "Email o password non corretti." : x.message; err.hidden = false;
+    err.textContent = x.message; err.hidden = false;
   } finally { $("login-btn").disabled = false; }
 });
 $("logout").addEventListener("click", async () => {
