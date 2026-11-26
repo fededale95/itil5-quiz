@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ITIL 5 Autoverifica</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: one centred exam card (max 680px), progress rail on top, feedback panel below the options. */
+:root {
+  --bg: #F2F5F5;
+  --surface: #FFFFFF;
+  --fg: #1F2933;
+  --muted: #5B6770;
+  --line: #D3DCDE;
+  --accent: #0B5D6B;
+  --accent-soft: #E1EFF1;
+  --ok: #2F7A3A;
+  --ok-soft: #E6F3E8;
+  --ko: #B3401F;
+  --ko-soft: #FBEBE5;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11181B; --surface: #182226; --fg: #E4ECEE; --muted: #93A3A9; --line: #2B3A3F;
+    --accent: #5FB8C6; --accent-soft: #1B3339; --ok: #7CCB86; --ok-soft: #1C3222;
+    --ko: #F0977A; --ko-soft: #3A2119; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11181B; --surface: #182226; --fg: #E4ECEE; --muted: #93A3A9; --line: #2B3A3F;
+  --accent: #5FB8C6; --accent-soft: #1B3339; --ok: #7CCB86; --ok-soft: #1C3222;
+  --ko: #F0977A; --ko-soft: #3A2119; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 48px;
+}
+.wrap { max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+header { display: flex; flex-direction: column; gap: 4px; }
+.eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+h1 { margin: 0; font-size: 26px; line-height: 1.2; font-weight: 700; text-wrap: balance; }
+.sub { margin: 0; color: var(--muted); font-size: 14px; }
+
+.rail { display: grid; grid-template-columns: repeat(15, 1fr); gap: 4px; }
+.rail span { height: 6px; border-radius: 3px; background: var(--line); }
+.rail span.cur { background: var(--accent); }
+.rail span.ok { background: var(--ok); }
+.rail span.ko { background: var(--ko); }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 22px; display: flex; flex-direction: column; gap: 16px; }
+.meta { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.num { font-family: var(--font-mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip { font-family: var(--font-mono); font-size: 11px; letter-spacing: .04em; color: var(--accent); background: var(--accent-soft); padding: 3px 8px; border-radius: 999px; }
+.q { margin: 0; font-size: 18px; line-height: 1.45; font-weight: 600; text-wrap: pretty; }
+.q-list { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; font-size: 15px; color: var(--fg); }
+
+.opts { display: flex; flex-direction: column; gap: 8px; }
+.opt {
+  display: flex; gap: 12px; align-items: flex-start; width: 100%; text-align: left;
+  font: inherit; font-size: 15px; color: var(--fg); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+.opt:hover:not(:disabled) { border-color: var(--accent); background: var(--accent-soft); }
+.opt:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.opt:disabled { cursor: default; }
+.opt .k {
+  flex: none; width: 26px; height: 26px; border-radius: 6px; display: grid; place-items: center;
+  font-family: var(--font-mono); font-size: 13px; font-weight: 600; border: 1px solid var(--line); color: var(--muted);
+}
+.opt.right { border-color: var(--ok); background: var(--ok-soft); }
+.opt.right .k { background: var(--ok); border-color: var(--ok); color: var(--surface); }
+.opt.wrong { border-color: var(--ko); background: var(--ko-soft); }
+.opt.wrong .k { background: var(--ko); border-color: var(--ko); color: var(--surface); }
+.opt.dim { opacity: .55; }
+
+.fb { border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; font-size: 15px; }
+.fb.ok { background: var(--ok-soft); }
+.fb.ko { background: var(--ko-soft); }
+.fb strong { font-size: 15px; }
+.fb.ok strong { color: var(--ok); }
+.fb.ko strong { color: var(--ko); }
+
+.actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.hint { font-size: 12px; color: var(--muted); font-family: var(--font-mono); }
+.btn {
+  font: inherit; font-weight: 600; font-size: 15px; border-radius: 10px; padding: 10px 18px; cursor: pointer;
+  background: var(--accent); color: var(--surface); border: 1px solid var(--accent);
+}
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn.ghost { background: transparent; color: var(--accent); }
+
+.score { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.score .big { font-size: 48px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.score .of { font-size: 20px; color: var(--muted); }
+.verdict { font-family: var(--font-mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; padding: 4px 10px; border-radius: 999px; }
+.verdict.pass { color: var(--ok); background: var(--ok-soft); }
+.verdict.fail { color: var(--ko); background: var(--ko-soft); }
+.note { margin: 0; color: var(--muted); font-size: 14px; }
+.review { display: flex; flex-direction: column; gap: 10px; }
+.review h2 { margin: 0; font-size: 16px; }
+.rv { border-top: 1px solid var(--line); padding-top: 10px; display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+.rv .rq { font-weight: 600; }
+.rv .ra { color: var(--muted); }
+.rv .ra b { color: var(--ok); font-weight: 600; }
+.rv .ry { color: var(--ko); }
+.toggle { display: flex; gap: 8px; align-items: center; font-size: 14px; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { .opt { transition: none; } }
+@media (max-width: 480px) { .card { padding: 16px; } h1 { font-size: 22px; } .q { font-size: 17px; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">ITIL Foundation (Version 5) · Corso interno Nimbus</span>
+    <h1>Autoverifica in 15 domande</h1>
+    <p class="sub">Scegli una risposta, leggi la spiegazione e vai avanti. Obiettivo: almeno 10 su 15. All'esame la soglia è il 65%.</p>
+  </header>
+  <div class="rail" id="rail" aria-hidden="true"></div>
+  <main class="card" id="card" aria-live="polite"></main>
+</div>
+
+<script>
+const QS = [
+  { cat: "Termini chiave", q: "Quale frase descrive meglio un outcome (risultato)?",
+    o: ["Un report mensile prodotto dal fornitore", "Un esito per una parte interessata reso possibile da uno o più output", "Una funzionalità del servizio", "Una metrica di disponibilità"],
+    a: 1, e: "L'outcome è l'esito per la parte interessata. Il report (A) è un output: un deliverable di un'attività, ciò che il fornitore produce." },
+  { cat: "Termini chiave", q: "Chi, in una relazione di servizio, autorizza il budget per il consumo del servizio?",
+    o: ["Cliente", "Utente", "Sponsor", "Fornitore del servizio"],
+    a: 2, e: "Lo sponsor autorizza il budget. Il cliente definisce i requisiti e si assume la responsabilità degli outcome; l'utente usa il servizio." },
+  { cat: "Termini chiave", q: "Quale categoria di qualità descrive «quanto il servizio è disponibile e sicuro»?",
+    o: ["Utilità (utility)", "Garanzia (warranty)", "User Experience", "Sostenibilità"],
+    a: 1, e: "La garanzia è «come funziona il servizio», idoneo all'uso: disponibilità, capacità, sicurezza, continuità. L'utilità è «cosa fa», idoneo allo scopo." },
+  { cat: "Ciclo di vita", q: "Quale attività del ciclo di vita ha lo scopo di procurare o allocare le risorse necessarie per realizzare il prodotto?",
+    o: ["Scoprire (Discover)", "Progettare (Design)", "Acquisire (Acquire)", "Costruire (Build)"],
+    a: 2, e: "Acquisire procura o alloca le risorse. Costruire crea, configura e testa le soluzioni tecnologiche." },
+  { cat: "Ciclo di vita", q: "Quale attività ripristina il normale funzionamento dei prodotti e l'erogazione dei servizi quando necessario?",
+    o: ["Far funzionare (Operate)", "Erogare (Deliver)", "Mettere in esercizio (Transition)", "Supportare (Support)"],
+    a: 3, e: "Supportare ripristina. Far funzionare garantisce le prestazioni concordate del prodotto; Erogare eroga i servizi basati sui prodotti live." },
+  { cat: "Value System", q: "Quanti componenti ha l'ITIL Value System?",
+    o: ["4", "5", "6", "7"],
+    a: 1, e: "Cinque: principi guida, governance, catena del valore, pratiche di gestione, miglioramento continuo. Sette sono i principi guida, quattro le dimensioni." },
+  { cat: "Principi guida", q: "Un team vuole automatizzare un processo di approvazione lento e pieno di passaggi inutili. Quale principio suggerisce di semplificarlo prima?",
+    o: ["Partire dallo stato attuale", "Ottimizzare e automatizzare", "Concentrarsi sul valore", "Collaborare e promuovere la visibilità"],
+    a: 1, e: "Ottimizzare e automatizzare: prima si snellisce e si semplifica, poi si automatizza. Automatizzare un processo imperfetto ha poco senso." },
+  { cat: "Principi guida", q: "Prima di sostituire uno strumento, l'organizzazione analizza cosa del sistema attuale funziona bene e può essere riusato. Quale principio sta applicando?",
+    o: ["Partire dallo stato attuale", "Pensare e lavorare in modo olistico", "Mantenere semplicità e praticità", "Procedere in modo iterativo con feedback"],
+    a: 0, e: "Partire dallo stato attuale: osservare direttamente e riusare ciò che funziona, invece di ripartire da zero." },
+  { cat: "ITIL e IA", q: "Un'IA riassume un ticket di incidente complesso per il report alla direzione. Quale capacità dell'ITIL AI Capability Model sta usando?",
+    o: ["Creazione", "Chiarimento", "Cognizione", "Coordinamento"],
+    a: 1, e: "Chiarimento: aiuta a capire contenuti esistenti riassumendoli, riformulandoli o traducendoli. La Creazione produce artefatti che prima non esistevano." },
+  { cat: "ITIL e IA", q: "Quale capacità dell'ITIL AI Capability Model corrisponde a un chatbot che aiuta gli utenti a ottenere supporto?",
+    o: ["Creazione", "Curatela", "Comunicazione", "Coordinamento"],
+    a: 2, e: "Comunicazione: l'IA come interfaccia conversazionale con servizi e sistemi. Il Coordinamento orchestra azioni tra sistemi, come smistamento ed escalation." },
+  { cat: "Termini chiave", q: "Quale tipo di relazione di servizio si concentra su innovazione e crescita, con obiettivi condivisi e spesso senza un accordo formale?",
+    o: ["Base", "Cooperativa", "Collaborativa", "Transazionale"],
+    a: 2, e: "Collaborativa: allineamento strategico e alta fiducia. La base punta a supporto ed efficienza, la cooperativa a miglioramento ed efficacia." },
+  { cat: "Flussi del valore", q: "In una mappa del flusso del valore, il tempo end-to-end dall'inizio alla consegna è il:",
+    o: ["Tempo di ciclo", "Tempo di attesa", "Lead time", "Efficienza del flusso"],
+    a: 2, e: "Il lead time è end-to-end. Il tempo di ciclo è la durata di una singola attività, il tempo di attesa è tra un passaggio e l'altro." },
+  { cat: "Ciclo di vita", q: "Quali due affermazioni sul ciclo di vita dei prodotti e dei servizi sono corrette?",
+    list: ["Le attività vanno eseguite sempre in sequenza.", "Le attività possono essere svolte in parallelo, ripetute o rivisitate.", "Le otto attività formano la catena del valore.", "Il ciclo di vita sostituisce la governance."],
+    o: ["1 e 3", "2 e 3", "2 e 4", "1 e 4"],
+    a: 1, e: "Le attività non sono sequenziali né lineari e insieme formano la catena del valore. La governance resta un componente separato del Value System." },
+  { cat: "Pratiche", q: "Come si chiama un problema che è stato analizzato ma non ancora risolto?",
+    o: ["Incidente", "Evento", "Errore noto", "Richiesta di servizio"],
+    a: 2, e: "Errore noto. Il problema è la causa, reale o potenziale, di uno o più incidenti; l'errore è il difetto che può causarli; l'errore noto è analizzato ma non risolto." },
+  { cat: "Miglioramento continuo", q: "Quale passaggio del modello di miglioramento continuo stabilisce la baseline delle prestazioni attuali?",
+    o: ["Qual è la visione?", "Dove siamo ora?", "Dove vogliamo arrivare?", "Ci stiamo arrivando?"],
+    a: 1, e: "«Dove siamo ora?» valuta lo stato attuale e fissa la baseline. «Ci stiamo arrivando?» confronta poi il nuovo stato con gli obiettivi." }
+];
+const LETTERS = ["A", "B", "C", "D"];
+let order, idx, answers, shuffle = false;
+const card = document.getElementById("card");
+const rail = document.getElementById("rail");
+
+function start(randomize) {
+  shuffle = !!randomize;
+  order = QS.map((_, i) => i);
+  if (shuffle) for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
+  idx = 0; answers = new Array(QS.length).fill(null);
+  render();
+}
+
+function drawRail() {
+  rail.innerHTML = "";
+  order.forEach((qi, i) => {
+    const s = document.createElement("span");
+    const a = answers[i];
+    if (a !== null) s.className = a === QS[qi].a ? "ok" : "ko";
+    else if (i === idx) s.className = "cur";
+    rail.appendChild(s);
+  });
+}
+
+function esc(t) { return t.replace(/&/g, "&amp;").replace(/</g, "&lt;"); }
+
+function render() {
+  drawRail();
+  if (idx >= order.length) return renderEnd();
+  const q = QS[order[idx]];
+  const chosen = answers[idx];
+  const done = chosen !== null;
+  const correctSoFar = answers.filter((a, i) => a !== null && a === QS[order[i]].a).length;
+  let h = `<div class="meta"><span class="num">Domanda ${idx + 1} / ${order.length} · ${correctSoFar} corrette</span><span class="chip">${q.cat}</span></div>`;
+  h += `<p class="q">${esc(q.q)}</p>`;
+  if (q.list) h += `<ol class="q-list">${q.list.map(l => `<li>${esc(l)}</li>`).join("")}</ol>`;
+  h += `<div class="opts">`;
+  q.o.forEach((o, i) => {
+    let cls = "opt";
+    if (done) { if (i === q.a) cls += " right"; else if (i === chosen) cls += " wrong"; else cls += " dim"; }
+    h += `<button class="${cls}" id="opt-${i}" data-i="${i}" ${done ? "disabled" : ""}><span class="k">${LETTERS[i]}</span><span>${esc(o)}</span></button>`;
+  });
+  h += `</div>`;
+  if (done) {
+    const ok = chosen === q.a;
+    h += `<div class="fb ${ok ? "ok" : "ko"}"><strong>${ok ? "Giusto." : `Sbagliato. La risposta corretta è ${LETTERS[q.a]}.`}</strong><span>${esc(q.e)}</span></div>`;
+    h += `<div class="actions"><span class="hint">Invio per continuare</span><button class="btn" id="next">${idx === order.length - 1 ? "Vedi il risultato" : "Domanda successiva"}</button></div>`;
+  } else {
+    h += `<div class="actions"><span class="hint">Tastiera: A–D oppure 1–4</span></div>`;
+  }
+  card.innerHTML = h;
+  card.querySelectorAll(".opt").forEach(b => b.addEventListener("click", () => pick(+b.dataset.i)));
+  const n = document.getElementById("next");
+  if (n) { n.addEventListener("click", next); n.focus({ preventScroll: true }); }
+}
+
+function pick(i) { if (answers[idx] !== null) return; answers[idx] = i; render(); }
+function next() { idx++; render(); window.scrollTo({ top: 0, behavior: "smooth" }); }
+
+function renderEnd() {
+  const right = answers.filter((a, i) => a === QS[order[i]].a).length;
+  const pct = Math.round(right / order.length * 100);
+  const pass = pct >= 65;
+  const wrong = order.map((qi, i) => ({ q: QS[qi], a: answers[i] })).filter(x => x.a !== x.q.a);
+  let h = `<div class="meta"><span class="num">Risultato</span><span class="verdict ${pass ? "pass" : "fail"}">${pass ? "Sopra la soglia" : "Sotto la soglia"}</span></div>`;
+  h += `<div class="score"><span class="big">${right}</span><span class="of">/ ${order.length} · ${pct}%</span></div>`;
+  h += `<p class="note">All'esame servono 26 risposte giuste su 40 (65%). Per stare tranquillo punta all'80% nelle simulazioni.</p>`;
+  if (wrong.length) {
+    h += `<div class="review"><h2>Da ripassare (${wrong.length})</h2>`;
+    wrong.forEach(x => {
+      h += `<div class="rv"><span class="rq">${esc(x.q.q)}</span><span class="ry">Hai risposto: ${LETTERS[x.a]}) ${esc(x.q.o[x.a])}</span><span class="ra">Corretta: <b>${LETTERS[x.q.a]}) ${esc(x.q.o[x.q.a])}</b> · ${esc(x.q.e)}</span></div>`;
+    });
+    h += `</div>`;
+  } else {
+    h += `<p class="note">Nessun errore. Prova di nuovo in ordine casuale per verificare che non stai ricordando la sequenza.</p>`;
+  }
+  h += `<div class="actions"><button class="btn ghost" id="again">Ricomincia</button><button class="btn" id="shuffle">Ricomincia in ordine casuale</button></div>`;
+  card.innerHTML = h;
+  document.getElementById("again").addEventListener("click", () => start(false));
+  document.getElementById("shuffle").addEventListener("click", () => start(true));
+}
+
+document.addEventListener("keydown", e => {
+  if (idx >= order.length || e.metaKey || e.ctrlKey || e.altKey) return;
+  const k = e.key.toUpperCase();
+  let i = LETTERS.indexOf(k);
+  if (i < 0 && "1234".includes(k) && k.length === 1) i = +k - 1;
+  if (i >= 0 && answers[idx] === null && i < QS[order[idx]].o.length) { e.preventDefault(); pick(i); }
+  else if (e.key === "Enter" && answers[idx] !== null && document.activeElement?.id !== "next") { e.preventDefault(); next(); }
+});
+
+start(false);
+</script>
+
+</body>
+</html>
