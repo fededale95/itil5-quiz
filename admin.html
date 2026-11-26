@@ -273,6 +273,7 @@ function csv() {
 $("login").addEventListener("submit", async e => {
   e.preventDefault();
   const err = $("login-err"); err.hidden = true;
+  if (!$("email").value.includes("@")) { err.textContent = "Inserisci l'email completa, per esempio nome@dominio.it."; err.hidden = false; return; }
   $("login-btn").disabled = true;
   try {
     saveSession(await auth("password", { email: $("email").value.trim(), password: $("password").value }));
